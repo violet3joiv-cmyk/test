@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+"""메인 애플리케이션 엔트리포인트.
+
+요구사항 1~9를 실제 실행 흐름으로 묶는 FastAPI 앱이며,
+수집 → 처리 → 분석 → 저장 → 알림 파이프라인을 제공한다.
+"""
+
 import os
 from collections import Counter
 from datetime import datetime, timezone
@@ -40,6 +46,7 @@ REPORT_DIR.mkdir(exist_ok=True)
 
 
 def run_pipeline(user_id: str = "default") -> dict:
+    """일일 통합 리포트 생성 파이프라인을 실행한다."""
     now = datetime.now(timezone.utc)
     setting = read_user_setting(user_id) or {
         "alarm_hour_utc": int(os.getenv("SCHEDULE_HOUR_UTC", "7")),
@@ -137,6 +144,7 @@ def run_pipeline(user_id: str = "default") -> dict:
 
 @app.on_event("startup")
 def startup() -> None:
+    """서버 시작 시 DB 초기화 및 일일 스케줄러를 등록한다."""
     init_db()
 
     scheduler = BackgroundScheduler(timezone="UTC")
@@ -146,42 +154,50 @@ def startup() -> None:
 
 @app.get("/health")
 def health() -> JSONResponse:
+    """헬스체크 엔드포인트."""
     return JSONResponse({"status": "ok"})
 
 
 @app.post("/pipeline/run")
 def pipeline_run() -> JSONResponse:
+    """수동으로 파이프라인 1회 실행."""
     return JSONResponse(run_pipeline("default"))
 
 
 @app.get("/db/news/history")
 def db_news_history(limit: int = 100) -> JSONResponse:
+    """저장된 뉴스 원문/가공 이력을 조회한다."""
     return JSONResponse({"items": read_news_history(limit)})
 
 
 @app.get("/db/trends/history")
 def db_trends_history(limit: int = 50) -> JSONResponse:
+    """저장된 인기검색어(트렌드) 이력을 조회한다."""
     return JSONResponse({"items": read_trends_history(limit)})
 
 
 @app.get("/db/reports/history")
 def db_reports_history(limit: int = 30) -> JSONResponse:
+    """생성된 리포트 페이지 이력을 조회한다."""
     return JSONResponse({"items": read_report_history(limit)})
 
 
 @app.get("/settings/{user_id}")
 def get_user_setting(user_id: str) -> JSONResponse:
+    """사용자 설정(알람 시간/테마/푸시 여부) 조회."""
     return JSONResponse({"setting": read_user_setting(user_id)})
 
 
 @app.post("/settings/{user_id}")
 def set_user_setting(user_id: str, alarm_hour_utc: int, alarm_minute_utc: int, theme: str = "light", push_enabled: bool = True) -> JSONResponse:
+    """사용자 설정 저장/수정."""
     upsert_user_setting(user_id, alarm_hour_utc, alarm_minute_utc, theme, push_enabled)
     return JSONResponse({"saved": True, "user_id": user_id})
 
 
 @app.get("/frontend/report", response_class=HTMLResponse)
 def frontend_report(date: str, page: int = 1, theme: str = "light") -> HTMLResponse:
+    """저장된 리포트를 간단한 HTML 뷰어로 렌더링한다."""
     report_rows = [x for x in read_report_history(100) if x["report_date"] == date and x["page_no"] == page]
     if not report_rows:
         return HTMLResponse("<h1>리포트가 없습니다.</h1>", status_code=404)

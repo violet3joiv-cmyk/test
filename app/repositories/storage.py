@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+"""DB Read/Write 레이어.
+
+비즈니스 로직과 SQL을 분리해 유지보수성을 높인다.
+"""
+
 from datetime import datetime, timezone
 from typing import Any
 
@@ -7,6 +12,7 @@ from app.core.database import get_connection
 
 
 def upsert_user_setting(user_id: str, alarm_hour_utc: int, alarm_minute_utc: int, theme: str, push_enabled: bool) -> None:
+    """사용자 설정을 저장하거나 갱신한다."""
     now = datetime.now(timezone.utc).isoformat()
     with get_connection() as conn:
         conn.execute(
@@ -25,12 +31,14 @@ def upsert_user_setting(user_id: str, alarm_hour_utc: int, alarm_minute_utc: int
 
 
 def read_user_setting(user_id: str) -> dict[str, Any] | None:
+    """단일 사용자 설정 조회."""
     with get_connection() as conn:
         row = conn.execute("SELECT * FROM user_settings WHERE user_id = ?", (user_id,)).fetchone()
     return dict(row) if row else None
 
 
 def save_news(items: list[dict[str, Any]]) -> None:
+    """수집/가공된 뉴스 리스트 저장."""
     now = datetime.now(timezone.utc).isoformat()
     with get_connection() as conn:
         conn.executemany(
@@ -59,12 +67,14 @@ def save_news(items: list[dict[str, Any]]) -> None:
 
 
 def read_news_history(limit: int = 100) -> list[dict[str, Any]]:
+    """뉴스 히스토리 조회."""
     with get_connection() as conn:
         rows = conn.execute("SELECT * FROM news_raw ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
     return [dict(r) for r in rows]
 
 
 def save_trends(items: list[dict[str, Any]]) -> None:
+    """인기검색어(트렌드) 저장."""
     now = datetime.now(timezone.utc).isoformat()
     with get_connection() as conn:
         conn.executemany(
@@ -74,12 +84,14 @@ def save_trends(items: list[dict[str, Any]]) -> None:
 
 
 def read_trends_history(limit: int = 50) -> list[dict[str, Any]]:
+    """트렌드 히스토리 조회."""
     with get_connection() as conn:
         rows = conn.execute("SELECT * FROM trends ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
     return [dict(r) for r in rows]
 
 
 def save_report_pages(report_date: str, pages: list[dict[str, Any]]) -> None:
+    """리포트 페이지(1~3면) 저장."""
     now = datetime.now(timezone.utc).isoformat()
     with get_connection() as conn:
         conn.executemany(
@@ -107,6 +119,7 @@ def save_report_pages(report_date: str, pages: list[dict[str, Any]]) -> None:
 
 
 def read_report_history(limit: int = 30) -> list[dict[str, Any]]:
+    """리포트 히스토리 조회."""
     with get_connection() as conn:
         rows = conn.execute("SELECT * FROM reports ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
     return [dict(r) for r in rows]

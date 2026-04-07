@@ -4,6 +4,7 @@ from app.services.report_builder import ReportComposer
 
 
 def test_report_composer_builds_three_pages() -> None:
+    # 1~3면 리포트가 정상 생성되는지 확인
     composer = ReportComposer()
     pages = composer.build_pages(
         generated_at=datetime(2026, 4, 7, tzinfo=timezone.utc),

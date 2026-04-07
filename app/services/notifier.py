@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+"""로컬 알림 전송 유틸리티."""
+
 import subprocess
 import sys
 

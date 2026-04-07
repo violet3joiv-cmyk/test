@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+"""리포트 페이지(1~3면) 구성 모듈."""
+
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -12,6 +14,8 @@ class BuiltPage:
 
 
 class ReportComposer:
+    """최종 화면용 Markdown/HTML 페이지를 생성한다."""
+
     def build_pages(
         self,
         generated_at: datetime,
@@ -21,6 +25,7 @@ class ReportComposer:
         image_url: str,
         theme: str,
     ) -> list[BuiltPage]:
+        """트렌드/뉴스/시장요약/이미지 정보를 바탕으로 3면 리포트를 만든다."""
         title = f"전세계 통합 뉴스·경제 리포트 ({generated_at:%Y-%m-%d})"
 
         page1_md = "\n".join(

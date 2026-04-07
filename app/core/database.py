@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+"""SQLite 데이터베이스 초기화/연결 유틸."""
+
 import sqlite3
 from pathlib import Path
 
@@ -8,12 +10,14 @@ DB_PATH.parent.mkdir(exist_ok=True)
 
 
 def get_connection() -> sqlite3.Connection:
+    """SQLite 연결을 반환한다."""
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
 
 def init_db() -> None:
+    """요구사항에 맞는 테이블 스키마를 생성한다."""
     with get_connection() as conn:
         conn.executescript(
             """
