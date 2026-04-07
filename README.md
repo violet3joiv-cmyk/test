@@ -94,3 +94,12 @@ source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
+
+## 충돌(Conflict) 해결 빠른 절차
+머지/리베이스 중 아래 파일 충돌이 반복될 경우, 현재 브랜치 기준으로 자동 정리:
+
+```bash
+bash scripts/resolve_conflicts.sh
+```
+
+그 다음 `git commit` 또는 `git rebase --continue`를 실행하세요.
