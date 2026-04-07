@@ -1,0 +1,7 @@
+# 충돌 빈도가 높은 파일은 기본적으로 현재 브랜치 기준으로 병합
+README.md merge=ours
+app/main.py merge=ours
+app/services/data_sources.py merge=ours
+app/services/notifier.py merge=ours
+app/services/report_builder.py merge=ours
+tests/test_report_builder.py merge=ours
