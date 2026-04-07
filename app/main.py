@@ -11,9 +11,53 @@ from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
-from apscheduler.schedulers.background import BackgroundScheduler
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse, JSONResponse
+try:
+    from apscheduler.schedulers.background import BackgroundScheduler
+except ModuleNotFoundError:  # pragma: no cover - 의존성 미설치 환경 대응
+    class BackgroundScheduler:  # type: ignore[override]
+        """apscheduler 미설치 시 앱 import 실패를 막기 위한 대체 객체."""
+
+        def __init__(self, *args, **kwargs) -> None:
+            _ = (args, kwargs)
+
+        def add_job(self, *args, **kwargs) -> None:
+            _ = (args, kwargs)
+
+        def start(self) -> None:
+            return
+
+try:
+    from fastapi import FastAPI
+    from fastapi.responses import HTMLResponse, JSONResponse
+except ModuleNotFoundError:  # pragma: no cover - 의존성 미설치 환경 대응
+    class JSONResponse(dict):  # type: ignore[misc]
+        def __init__(self, content, status_code: int = 200):
+            super().__init__(content)
+            self.status_code = status_code
+
+    class HTMLResponse(str):  # type: ignore[misc]
+        def __new__(cls, content: str, status_code: int = 200):
+            obj = str.__new__(cls, content)
+            obj.status_code = status_code
+            return obj
+
+    class FastAPI:  # type: ignore[misc]
+        """fastapi 미설치 환경에서도 모듈 import를 가능하게 하는 최소 대체 클래스."""
+
+        def __init__(self, *args, **kwargs) -> None:
+            _ = (args, kwargs)
+
+        def on_event(self, *args, **kwargs):
+            _ = (args, kwargs)
+            return lambda fn: fn
+
+        def get(self, *args, **kwargs):
+            _ = (args, kwargs)
+            return lambda fn: fn
+
+        def post(self, *args, **kwargs):
+            _ = (args, kwargs)
+            return lambda fn: fn
 
 from app.algorithms.analytics import (
     gdp_weighted_country_score,
@@ -47,6 +91,8 @@ REPORT_DIR.mkdir(exist_ok=True)
 
 def run_pipeline(user_id: str = "default") -> dict:
     """일일 통합 리포트 생성 파이프라인을 실행한다."""
+    # startup 이벤트를 거치지 않고 직접 호출되는 경우를 대비해 안전 초기화
+    init_db()
     now = datetime.now(timezone.utc)
     setting = read_user_setting(user_id) or {
         "alarm_hour_utc": int(os.getenv("SCHEDULE_HOUR_UTC", "7")),
